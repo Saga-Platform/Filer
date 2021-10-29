@@ -1,11 +1,8 @@
 pluginManagement {
     repositories {
-        mavenLocal()
+        maven { url 'https://repo.spring.io/release' }
         mavenCentral()
         gradlePluginPortal()
-    }
-    plugins {
-        id "${quarkusPluginId}" version "${quarkusPluginVersion}"
     }
 }
 rootProject.name = 'filer'
