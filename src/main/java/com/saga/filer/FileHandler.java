@@ -24,10 +24,8 @@ public class FileHandler {
                 .map(FilePart::content)
                 .flatMap(f -> {
                             try {
-                                MessageDigest shaDigest = MessageDigest.getInstance("SHA-256");
-
                                 return f.map(DataBuffer::asByteBuffer)
-                                        .reduce(shaDigest, (md, buf) -> {
+                                        .reduce(MessageDigest.getInstance("SHA-256"), (md, buf) -> {
                                             md.update(buf);
                                             return md;
                                         })
