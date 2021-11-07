@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.data.redis.core.ReactiveValueOperations;
+import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Component;
@@ -28,13 +28,12 @@ import java.util.function.Consumer;
 @Component
 public class FileHandler {
 
-    public static final String FILES_FOLDER = "files";
     private static final byte[] HEX_ARRAY = "0123456789abcdef".getBytes(StandardCharsets.US_ASCII);
 
-    private final ReactiveValueOperations<UUID, FileMetadata> redisOps;
+    private final ReactiveHashOperations<String, UUID, FileMetadata> redisOps;
 
     @Autowired
-    public FileHandler(ReactiveValueOperations<UUID, FileMetadata> redisOps) {
+    public FileHandler(ReactiveHashOperations<String, UUID, FileMetadata> redisOps) {
         this.redisOps = redisOps;
     }
 
@@ -49,16 +48,20 @@ public class FileHandler {
     public Mono<ServerResponse> retrieveFile(ServerRequest request) {
         var uuid = request.pathVariable(FilerApplication.UUID_PATH_VAR);
         return redisOps.get(uuid)
-                .flatMap(m -> {
-                    var filePath = Path.of(FILES_FOLDER, m.getHash());
-                    if (Files.exists(filePath)) {
-                        return ServerResponse.ok()
+                .filter(m -> Files.exists(Path.of(FilerApplication.FILES_FOLDER, m.getHash())))
+                .flatMap(m -> ServerResponse.ok()
                                 .headers(getHeaderInjector(m))
-                                .body(BodyInserters.fromResource(new FileSystemResource(filePath)));
-                    } else {
-                        return ServerResponse.notFound().build();
-                    }
-                });
+                                .body(BodyInserters.fromResource(new FileSystemResource(Path.of(FilerApplication.FILES_FOLDER, m.getHash()))))
+                )
+                .switchIfEmpty(ServerResponse.notFound().build());
+    }
+
+    public Mono<ServerResponse> deleteFile(ServerRequest request) {
+        var uuid = request.pathVariable(FilerApplication.UUID_PATH_VAR);
+        return redisOps.delete(UUID.fromString(uuid))
+                .filter(success -> success)
+                .flatMap(x -> ServerResponse.noContent().build())
+                .switchIfEmpty(ServerResponse.notFound().build());
     }
 
     private Mono<Tuple2<String, UUID>> hashAndStoreFile(FilePart f) {
@@ -81,7 +84,7 @@ public class FileHandler {
     }
 
     private Mono<Void> saveFileOnDisk(String fileName, FilePart f) {
-        var path = Path.of(FILES_FOLDER, fileName);
+        var path = Path.of(FilerApplication.FILES_FOLDER, fileName);
         if (Files.exists(path)) {
             return Mono.empty();
         }
@@ -92,7 +95,7 @@ public class FileHandler {
         var metadata = new FileMetadata(f.filename(), Objects.toString(f.headers().getContentType()), fileHash);
         var uuid = UUID.randomUUID();
 
-        return redisOps.set(uuid, metadata)
+        return redisOps.get(uuid, metadata)
                 .flatMap(success -> {
                     if (Boolean.TRUE.equals(success)) {
                         return Mono.just(uuid);
@@ -115,7 +118,7 @@ public class FileHandler {
     private Consumer<HttpHeaders> getHeaderInjector(FileMetadata m) {
         return h -> {
             h.add(HttpHeaders.CONTENT_TYPE, m.getContentType());
-            h.add(HttpHeaders.CONTENT_DISPOSITION,  String.format("attachement; filename=\"%s\"", m.getName()));
+            h.add(HttpHeaders.CONTENT_DISPOSITION, String.format("attachement; filename=\"%s\"", m.getName()));
         };
     }
 }
