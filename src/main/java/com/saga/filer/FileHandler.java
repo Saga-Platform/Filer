@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -46,30 +47,32 @@ public class FileHandler {
     }
 
     public Mono<ServerResponse> retrieveFile(ServerRequest request) {
+        var hash = request.pathVariable(FilerApplication.HASH_PATH_VAR);
         var uuid = request.pathVariable(FilerApplication.UUID_PATH_VAR);
-        return redisOps.get(uuid)
-                .filter(m -> Files.exists(Path.of(FilerApplication.FILES_FOLDER, m.getHash())))
+        return redisOps.get(hash, uuid)
+                .filter(m -> Files.exists(Path.of(FilerApplication.FILES_FOLDER, hash)))
                 .flatMap(m -> ServerResponse.ok()
-                                .headers(getHeaderInjector(m))
-                                .body(BodyInserters.fromResource(new FileSystemResource(Path.of(FilerApplication.FILES_FOLDER, m.getHash()))))
+                        .headers(getHeaderInjector(m))
+                        .body(BodyInserters.fromResource(new FileSystemResource(Path.of(FilerApplication.FILES_FOLDER, hash))))
                 )
                 .switchIfEmpty(ServerResponse.notFound().build());
     }
 
     public Mono<ServerResponse> deleteFile(ServerRequest request) {
+        var hash = request.pathVariable(FilerApplication.HASH_PATH_VAR);
         var uuid = request.pathVariable(FilerApplication.UUID_PATH_VAR);
-        return redisOps.delete(UUID.fromString(uuid))
-                .filter(success -> success)
+        return redisOps.remove(hash, UUID.fromString(uuid))
+                .filter(nbDeleted -> nbDeleted > 0)
                 .flatMap(x -> ServerResponse.noContent().build())
                 .switchIfEmpty(ServerResponse.notFound().build());
     }
 
-    private Mono<Tuple2<String, UUID>> hashAndStoreFile(FilePart f) {
+    private Mono<Tuple2<String, Map<String, String>>> hashAndStoreFile(FilePart f) {
         MessageDigest shaDigest;
         try {
             shaDigest = MessageDigest.getInstance("SHA-256");
         }
-        catch (NoSuchAlgorithmException e) {
+        catch (NoSuchAlgorithmException  e) {
             return Mono.error(e);
         }
 
@@ -78,9 +81,9 @@ public class FileHandler {
                 .collect(() -> shaDigest, MessageDigest::update)
                 .map(MessageDigest::digest)
                 .map(this::bytesToHex)
-                .delayUntil(h -> saveFileOnDisk(h, f))
-                .flatMap(h -> saveMetadata(h, f))
-                .map(u -> Tuples.of(f.filename(), u));
+                .delayUntil(hash -> saveFileOnDisk(hash, f))
+                .flatMap(hash -> saveMetadataInRedis(hash, f))
+                .map(hashUUid -> Tuples.of(f.filename(), hashUUid));
     }
 
     private Mono<Void> saveFileOnDisk(String fileName, FilePart f) {
@@ -91,16 +94,16 @@ public class FileHandler {
         return f.transferTo(path);
     }
 
-    private Mono<UUID> saveMetadata(String fileHash, FilePart f) {
-        var metadata = new FileMetadata(f.filename(), Objects.toString(f.headers().getContentType()), fileHash);
+    private Mono<Map<String, String>> saveMetadataInRedis(String fileHash, FilePart f) {
+        var metadata = new FileMetadata(f.filename(), Objects.toString(f.headers().getContentType()));
         var uuid = UUID.randomUUID();
 
-        return redisOps.get(uuid, metadata)
+        return redisOps.putIfAbsent(fileHash, uuid, metadata)
                 .flatMap(success -> {
                     if (Boolean.TRUE.equals(success)) {
-                        return Mono.just(uuid);
+                        return Mono.just(Map.of("hash", fileHash, "uuid", uuid.toString()));
                     } else {
-                        return Mono.error(() -> new IllegalStateException("Metadata could not be saved to Redis"));
+                        return Mono.error(() -> new IllegalStateException("File hash and UUID combination already present in Redis"));
                     }
                 });
     }
