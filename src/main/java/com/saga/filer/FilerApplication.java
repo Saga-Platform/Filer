@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.http.codec.multipart.DefaultPartHttpMessageReader;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -53,19 +53,19 @@ public class FilerApplication implements WebFluxConfigurer {
     }
 
     @Bean
-    public ReactiveRedisTemplate<String, Object> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
-        var context = RedisSerializationContext.<String, Object>newSerializationContext()
-                .key(new Jackson2JsonRedisSerializer<>(String.class))
-                .value(new Jackson2JsonRedisSerializer<>(Object.class))
-                .hashKey(new Jackson2JsonRedisSerializer<>(UUID.class))
-                .hashValue(new Jackson2JsonRedisSerializer<>(FileMetadata.class))
+    public ReactiveRedisTemplate<byte[], Object> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
+        var context = RedisSerializationContext.<byte[], Object>newSerializationContext()
+                .key(RedisSerializer.byteArray())
+                .value(new Jackson2CborRedisSerializer<>(Object.class))
+                .hashKey(new Jackson2CborRedisSerializer<>(UUID.class))
+                .hashValue(new Jackson2CborRedisSerializer<>(FileMetadata.class))
                 .build();
 
         return new ReactiveRedisTemplate<>(factory, context);
     }
 
     @Bean
-    public ReactiveHashOperations<String, UUID, FileMetadata> metadataHashOps(ReactiveRedisTemplate<String, Object> template) {
+    public ReactiveHashOperations<byte[], UUID, FileMetadata> metadataHashOps(ReactiveRedisTemplate<byte[], Object> template) {
         return template.opsForHash();
     }
 

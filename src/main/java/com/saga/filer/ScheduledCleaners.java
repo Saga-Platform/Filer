@@ -18,10 +18,10 @@ public class ScheduledCleaners {
 
     private static final Logger log = LoggerFactory.getLogger(ScheduledCleaners.class);
 
-    private final ReactiveRedisTemplate<String, Object> redisOps;
+    private final ReactiveRedisTemplate<byte[], Object> redisOps;
 
     @Autowired
-    public ScheduledCleaners(ReactiveRedisTemplate<String, Object> redisOps) {
+    public ScheduledCleaners(ReactiveRedisTemplate<byte[], Object> redisOps) {
         this.redisOps = redisOps;
     }
 
@@ -29,7 +29,7 @@ public class ScheduledCleaners {
     public void cleanupDanglingFiles() throws IOException {
         log.info("Starting dangling file GC");
         Flux.fromStream(Files.list(Path.of(FilerApplication.FILES_FOLDER)))
-                .filterWhen(path -> redisOps.hasKey(path.getFileName().toString()).map(hasKey -> !hasKey))
+                .filterWhen(path -> redisOps.hasKey(Utils.hexToBytes(path.getFileName().toString())).map(hasKey -> !hasKey))
                 .subscribe(path -> {
                     try {
                         Files.delete(path);
