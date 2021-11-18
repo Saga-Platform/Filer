@@ -71,8 +71,8 @@ pipeline {
         stage('Create and publish manifests') {
             steps {
                 container('docker') {
-                    sh "docker manifest create $REGISTRY_URL/$IMAGE_NAME:$(date +%Y%m%d) $REGISTRY_URL/$IMAGE_NAME:amd64 $REGISTRY_URL/$IMAGE_NAME:arm64"
-                    sh "docker manifest push $REGISTRY_URL/$IMAGE_NAME:$(date +%Y%m%d)"
+                    sh 'docker manifest create $REGISTRY_URL/$IMAGE_NAME:$(date +%Y%m%d) $REGISTRY_URL/$IMAGE_NAME:amd64 $REGISTRY_URL/$IMAGE_NAME:arm64'
+                    sh 'docker manifest push $REGISTRY_URL/$IMAGE_NAME:$(date +%Y%m%d)'
                     sh "docker manifest create $REGISTRY_URL/$IMAGE_NAME:latest $REGISTRY_URL/$IMAGE_NAME:amd64 $REGISTRY_URL/$IMAGE_NAME:arm64"
                     sh "docker manifest push $REGISTRY_URL/$IMAGE_NAME:latest"
                 }
