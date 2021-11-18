@@ -36,7 +36,7 @@ pipeline {
         stage('Unit tests') {
             steps {
                 container("gradle") {
-                    sh "gradle test"
+                    sh "gradle test --no-daemon"
                 }
             }
         }
@@ -78,6 +78,11 @@ pipeline {
                     sh "docker manifest push $REGISTRY_URL/$IMAGE_NAME:latest"
                 }
             }
+        }
+    }
+    post {
+        always {
+            junit 'build/test-results/**/*.xml'
         }
     }
 }
