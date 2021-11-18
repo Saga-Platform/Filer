@@ -6,7 +6,7 @@ pipeline {
                 spec:
                   containers:
                   - name: docker
-                    image: docker.int.slongpre.com/buildx-cli:latest
+                    image: docker.int.slongpre.com:34443/buildx-cli:latest
                     securityContext:
                       privileged: true
                     env:
