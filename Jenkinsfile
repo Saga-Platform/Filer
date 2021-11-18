@@ -16,7 +16,7 @@ pipeline {
                     args: ["999999999"]
 
                   - name: gradle
-                    image: gradle:jdk11-alpine
+                    image: gradle:jdk11
                     command: ["sleep"]
                     args: ["999999999"]
                 '''
