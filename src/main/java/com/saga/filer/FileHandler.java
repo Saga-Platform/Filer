@@ -66,6 +66,10 @@ public class FileHandler {
     }
 
     private Mono<Tuple2<String, Map<String, String>>> hashAndStoreFile(FilePart f) {
+        if (f.filename().isBlank()) {
+            return Mono.error(() -> new NullPointerException("Empty file name"));
+        }
+
         MessageDigest shaDigest;
         try {
             shaDigest = MessageDigest.getInstance("SHA-256");
@@ -76,6 +80,13 @@ public class FileHandler {
 
         return f.content()
                 .map(DataBuffer::asByteBuffer)
+                .concatMap(buf -> {
+                    if (buf.capacity() == 0) {
+                        return Mono.error(() -> new NullPointerException("Empty file"));
+                    }
+
+                    return Mono.just(buf);
+                })
                 .collect(() -> shaDigest, MessageDigest::update)
                 .map(MessageDigest::digest)
                 .delayUntil(hash -> saveFileOnDisk(hash, f))
