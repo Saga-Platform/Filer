@@ -21,9 +21,9 @@ public class Utils {
     }
 
     public static byte[] hexToBytes(String hexString) {
+        hexString = hexString.toLowerCase();
         if (hexString.length() % 2 == 1) {
-            throw new IllegalArgumentException(
-                    "Invalid hexadecimal String supplied.");
+            throw new IllegalArgumentException("Invalid hexadecimal String supplied.");
         }
 
         byte[] bytes = new byte[hexString.length() / 2];
@@ -42,8 +42,7 @@ public class Utils {
     private static int toDigit(char hexChar) {
         int digit = Character.digit(hexChar, 16);
         if(digit == -1) {
-            throw new IllegalArgumentException(
-                    "Invalid Hexadecimal Character: "+ hexChar);
+            throw new IllegalArgumentException("Invalid Hexadecimal Character: "+ hexChar);
         }
         return digit;
     }

@@ -58,6 +58,7 @@ public class FileHandler {
     public Mono<ServerResponse> deleteFile(ServerRequest request) {
         var hash = request.pathVariable(FilerApplication.HASH_PATH_VAR);
         var uuid = request.pathVariable(FilerApplication.UUID_PATH_VAR);
+
         return redisOps.remove(Utils.hexToBytes(hash), UUID.fromString(uuid))
                 .filter(nbDeleted -> nbDeleted > 0)
                 .flatMap(x -> ServerResponse.noContent().build())
@@ -84,9 +85,11 @@ public class FileHandler {
 
     private Mono<Void> saveFileOnDisk(byte[] fileHash, FilePart f) {
         var path = Path.of(FilerApplication.FILES_FOLDER, Utils.bytesToHex(fileHash));
+
         if (Files.exists(path)) {
             return Mono.empty();
         }
+
         return f.transferTo(path);
     }
 

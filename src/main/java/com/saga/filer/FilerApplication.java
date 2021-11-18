@@ -30,6 +30,7 @@ public class FilerApplication implements WebFluxConfigurer {
     public static final String HASH_PATH_VAR = "hash";
     public static final String UUID_PATH_VAR = "uuid";
     public static final String FILES_FOLDER = "files";
+    public static final int MAX_IN_MEMORY_SIZE = 16384 * 1024;
 
     public static void main(String[] args) {
         SpringApplication.run(FilerApplication.class, args);
@@ -38,7 +39,7 @@ public class FilerApplication implements WebFluxConfigurer {
     @Override
     public void configureHttpMessageCodecs(ServerCodecConfigurer configurer) {
         var partReader = new DefaultPartHttpMessageReader();
-        partReader.setMaxInMemorySize(16384 * 1024); // 16MB
+        partReader.setMaxInMemorySize(MAX_IN_MEMORY_SIZE); // 16MB
         configurer.customCodecs().register(partReader);
     }
 
