@@ -95,13 +95,13 @@ pipeline {
                 }
             }
         }
-        stage('Deploy to Kubernetes') {
-            steps {
-                container('kubectl') {
-
-                }
-            }
-        }
+//         stage('Deploy to Kubernetes') {
+//             steps {
+//                 container('kubectl') {
+//
+//                 }
+//             }
+//         }
     }
     post {
         always {
