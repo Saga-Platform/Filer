@@ -1,7 +1,5 @@
 package com.saga.filer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.FileSystemResource;
@@ -30,8 +28,6 @@ import java.util.function.Consumer;
 @Component
 public class FileHandler {
 
-    private static final Logger log = LoggerFactory.getLogger(FileHandler.class);
-
     private final ReactiveHashOperations<byte[], UUID, FileMetadata> redisOps;
 
     @Autowired
@@ -52,15 +48,8 @@ public class FileHandler {
         var uuid = request.pathVariable(FilerApplication.UUID_PATH_VAR);
         Path path = Path.of(FilerApplication.FILES_FOLDER, hash);
 
-        log.info("Retreiving {}", path.toAbsolutePath());
-
-        return redisOps.get(Utils.hexToBytes(hash), uuid)
-                .filter(m -> {
-                    log.info("Fetched metadata {}", m);
-                    boolean exists = Files.exists(path);
-                    log.info("Exists: {}", exists);
-                    return exists;
-                })
+        return redisOps.get(Utils.hexToBytes(hash), UUID.fromString(uuid))
+                .filter(m -> Files.exists(path))
                 .flatMap(m -> ServerResponse.ok()
                         .headers(getHeaderInjector(m))
                         .body(BodyInserters.fromResource(new FileSystemResource(path)))
@@ -109,8 +98,6 @@ public class FileHandler {
 
     private Mono<Void> saveFileOnDisk(byte[] fileHash, FilePart f) {
         var path = Path.of(FilerApplication.FILES_FOLDER, Utils.bytesToHex(fileHash));
-
-        log.info("Storing {}", path.toAbsolutePath());
 
         if (Files.exists(path)) {
             return Mono.empty();

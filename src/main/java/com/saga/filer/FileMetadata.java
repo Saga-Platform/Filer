@@ -28,12 +28,4 @@ public class FileMetadata implements Serializable {
     public String getContentType() {
         return contentType;
     }
-
-    @Override
-    public String toString() {
-        return "FileMetadata{" +
-                "name='" + name + '\'' +
-                ", contentType='" + contentType + '\'' +
-                '}';
-    }
 }
