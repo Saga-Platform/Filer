@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: filer-files
+  namespace: saga
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 25Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: filer
+  namespace: saga
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.saga: filer
+  template:
+    metadata:
+      labels:
+        app.saga: filer
+    spec:
+      containers:
+      - name: filer
+        image: docker.int.slongpre.com:34443/saga-filer:latest
+        imagePullPolicy: Always
+        env:
+          - name: REDIS_HOST
+            value: redis.redis
+        volumeMounts:
+          - name: files
+            mountPath: /files
+          - name: localtime
+            mountPath: /etc/localtime
+          - name: timezone
+            mountPath: /etc/timezone
+      volumes:
+        - name: files
+          persistentVolumeClaim:
+            claimName: filer-files
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+            type: File
+        - name: timezone
+          hostPath:
+            path: /etc/timezone
+            type: File
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: filer
+  namespace: saga
+spec:
+  ports:
+    - name: filer
+      port: 8080
+      targetPort: 8080
+  selector:
+    app.saga: filer
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: filer
+  namespace: saga
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`filer.saga.int.slongpre.com`)
+      services:
+        - kind: Service
+          name: filer
+          port: 8080
