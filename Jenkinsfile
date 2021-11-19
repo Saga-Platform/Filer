@@ -31,7 +31,7 @@ pipeline {
                   volumes:
                   - name: config-volume
                     configMap:
-                      name: saga-kubectl
+                      name: jenkins-kubectl
                       items:
                       - key: config.yml
                         path: config
