@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: filer
+  namespace: saga
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.saga: filer
+  template:
+    metadata:
+      labels:
+        app.saga: filer
+    spec:
+      containers:
+      - name: filer
+        image: docker.int.slongpre.com:34443/saga-filer:latest
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: filer
+  namespace: saga
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app.saga: traefik
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: filer
+  namespace: saga
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`filer.saga.int.slongpre.com`)
+      services:
+        - kind: Service
+          name: saga-filer
+          port: 8080
+  tls:
+    certResolver: slongpre
+    domains:
+      - main: "*.saga.int.slongpre.com"

@@ -19,6 +19,22 @@ pipeline {
                     image: gradle:jdk11
                     command: ["sleep"]
                     args: ["999999999"]
+
+                  - name: kubectl
+                    image: rancher/kubectl:v1.22.2
+                    volumeMounts:
+                    - name: config-volume
+                      mountPath: "/root/.kube/"
+                    command: ["sleep"]
+                    args: ["999999999"]
+
+                volumes:
+                - name: config-volume
+                    configMap:
+                    name: saga-kubectl
+                    items:
+                    - key: config.yml
+                        path: config
                 '''
         }
     }
@@ -76,6 +92,13 @@ pipeline {
                     sh 'docker manifest push $REGISTRY_URL/$IMAGE_NAME:$(date +%Y%m%d)'
                     sh "docker manifest create $REGISTRY_URL/$IMAGE_NAME:latest $REGISTRY_URL/$IMAGE_NAME:amd64 $REGISTRY_URL/$IMAGE_NAME:arm64"
                     sh "docker manifest push $REGISTRY_URL/$IMAGE_NAME:latest"
+                }
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                container('kubectl') {
+
                 }
             }
         }
