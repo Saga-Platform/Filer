@@ -21,7 +21,7 @@ pipeline {
                     args: ["999999999"]
 
                   - name: kubectl
-                    image: rancher/kubectl:v1.22.2
+                    image: lachlanevenson/k8s-kubectl:v1.22.2
                     volumeMounts:
                     - name: config-volume
                       mountPath: "/root/.kube/"
