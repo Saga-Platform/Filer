@@ -52,7 +52,7 @@ public class FileHandler {
         var uuid = request.pathVariable(FilerApplication.UUID_PATH_VAR);
         Path path = Path.of(FilerApplication.FILES_FOLDER, hash);
 
-        log.info("Retreiving {}", path);
+        log.info("Retreiving {}", path.toAbsolutePath());
 
         return redisOps.get(Utils.hexToBytes(hash), uuid)
                 .filter(m -> Files.exists(path))
@@ -105,7 +105,7 @@ public class FileHandler {
     private Mono<Void> saveFileOnDisk(byte[] fileHash, FilePart f) {
         var path = Path.of(FilerApplication.FILES_FOLDER, Utils.bytesToHex(fileHash));
 
-        log.info("Storing {}", path);
+        log.info("Storing {}", path.toAbsolutePath());
 
         if (Files.exists(path)) {
             return Mono.empty();
