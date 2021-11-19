@@ -55,7 +55,11 @@ public class FileHandler {
         log.info("Retreiving {}", path.toAbsolutePath());
 
         return redisOps.get(Utils.hexToBytes(hash), uuid)
-                .filter(m -> Files.exists(path))
+                .filter(m -> {
+                    boolean exists = Files.exists(path);
+                    log.info("Exists: {}", exists);
+                    return exists;
+                })
                 .flatMap(m -> ServerResponse.ok()
                         .headers(getHeaderInjector(m))
                         .body(BodyInserters.fromResource(new FileSystemResource(path)))
