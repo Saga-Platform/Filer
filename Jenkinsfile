@@ -30,11 +30,11 @@ pipeline {
 
                   volumes:
                   - name: config-volume
-                      configMap:
+                    configMap:
                       name: saga-kubectl
                       items:
                       - key: config.yml
-                          path: config
+                        path: config
                 '''
         }
     }
