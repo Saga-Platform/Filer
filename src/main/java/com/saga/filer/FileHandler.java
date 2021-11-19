@@ -56,6 +56,7 @@ public class FileHandler {
 
         return redisOps.get(Utils.hexToBytes(hash), uuid)
                 .filter(m -> {
+                    log.info("Fetched metadata {}", m);
                     boolean exists = Files.exists(path);
                     log.info("Exists: {}", exists);
                     return exists;
