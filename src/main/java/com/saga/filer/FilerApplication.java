@@ -1,7 +1,5 @@
 package com.saga.filer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -33,8 +31,6 @@ public class FilerApplication implements WebFluxConfigurer {
     public static final String UUID_PATH_VAR = "uuid";
     public static final String FILES_FOLDER = "files";
     public static final int MAX_IN_MEMORY_SIZE = 16384 * 1024;
-
-    private static final Logger log = LoggerFactory.getLogger(FilerApplication.class);
 
     public static void main(String[] args) {
         SpringApplication.run(FilerApplication.class, args);
