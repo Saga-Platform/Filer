@@ -28,13 +28,13 @@ pipeline {
                     command: ["sleep"]
                     args: ["999999999"]
 
-                volumes:
-                - name: config-volume
-                    configMap:
-                    name: saga-kubectl
-                    items:
-                    - key: config.yml
-                        path: config
+                  volumes:
+                  - name: config-volume
+                      configMap:
+                      name: saga-kubectl
+                      items:
+                      - key: config.yml
+                          path: config
                 '''
         }
     }
