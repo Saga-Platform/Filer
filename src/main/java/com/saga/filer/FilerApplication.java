@@ -1,7 +1,7 @@
 package com.saga.filer;
 
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -16,13 +16,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.UUID;
 
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
@@ -36,6 +33,8 @@ public class FilerApplication implements WebFluxConfigurer {
     public static final String UUID_PATH_VAR = "uuid";
     public static final String FILES_FOLDER = "files";
     public static final int MAX_IN_MEMORY_SIZE = 16384 * 1024;
+
+    private static final Logger log = LoggerFactory.getLogger(FilerApplication.class);
 
     public static void main(String[] args) {
         SpringApplication.run(FilerApplication.class, args);
@@ -82,14 +81,5 @@ public class FilerApplication implements WebFluxConfigurer {
                 .GET(String.format("/{%s}/{%s}", HASH_PATH_VAR, UUID_PATH_VAR), fileHandler::retrieveFile)
                 .DELETE(String.format("/{%s}/{%s}", HASH_PATH_VAR, UUID_PATH_VAR), fileHandler::deleteFile)
                 .build();
-    }
-
-    @Component
-    public static class StartupRunner implements ApplicationRunner {
-
-        @Override
-        public void run(ApplicationArguments args) throws Exception {
-            Files.createDirectory(Path.of(FILES_FOLDER));
-        }
     }
 }
