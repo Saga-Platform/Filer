@@ -40,6 +40,14 @@ spec:
         - name: files
           persistentVolumeClaim:
             claimName: filer-files
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+            type: File
+        - name: timezone
+          hostPath:
+            path: /etc/timezone
+            type: File
 ---
 kind: Service
 apiVersion: v1
