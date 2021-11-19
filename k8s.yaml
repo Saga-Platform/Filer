@@ -24,11 +24,11 @@ metadata:
   namespace: saga
 spec:
   ports:
-    - name: http
+    - name: filer
       port: 8080
       targetPort: 8080
   selector:
-    app.saga: traefik
+    app.saga: filer
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
@@ -37,15 +37,11 @@ metadata:
   namespace: saga
 spec:
   entryPoints:
-    - websecure
+    - web
   routes:
     - kind: Rule
       match: Host(`filer.saga.int.slongpre.com`)
       services:
         - kind: Service
-          name: saga-filer
+          name: filer
           port: 8080
-  tls:
-    certResolver: slongpre
-    domains:
-      - main: "*.saga.int.slongpre.com"

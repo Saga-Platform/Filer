@@ -1,5 +1,7 @@
 package com.saga.filer;
 
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -14,10 +16,13 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.UUID;
 
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
@@ -77,5 +82,14 @@ public class FilerApplication implements WebFluxConfigurer {
                 .GET(String.format("/{%s}/{%s}", HASH_PATH_VAR, UUID_PATH_VAR), fileHandler::retrieveFile)
                 .DELETE(String.format("/{%s}/{%s}", HASH_PATH_VAR, UUID_PATH_VAR), fileHandler::deleteFile)
                 .build();
+    }
+
+    @Component
+    public static class StartupRunner implements ApplicationRunner {
+
+        @Override
+        public void run(ApplicationArguments args) throws Exception {
+            Files.createDirectory(Path.of(FILES_FOLDER));
+        }
     }
 }

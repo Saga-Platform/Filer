@@ -95,13 +95,14 @@ pipeline {
                 }
             }
         }
-//         stage('Deploy to Kubernetes') {
-//             steps {
-//                 container('kubectl') {
-//
-//                 }
-//             }
-//         }
+        stage('Deploy to Kubernetes') {
+            steps {
+                container('kubectl') {
+                    sh 'kubectl apply -f ./k8s.yaml'
+                    sh 'kubectl rollout restart -n saga deployment filer'
+                }
+            }
+        }
     }
     post {
         always {
