@@ -1,5 +1,7 @@
 package com.saga.filer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.FileSystemResource;
@@ -28,6 +30,8 @@ import java.util.function.Consumer;
 @Component
 public class FileHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(FileHandler.class);
+
     private final ReactiveHashOperations<byte[], UUID, FileMetadata> redisOps;
 
     @Autowired
@@ -46,11 +50,15 @@ public class FileHandler {
     public Mono<ServerResponse> retrieveFile(ServerRequest request) {
         var hash = request.pathVariable(FilerApplication.HASH_PATH_VAR);
         var uuid = request.pathVariable(FilerApplication.UUID_PATH_VAR);
+        Path path = Path.of(FilerApplication.FILES_FOLDER, hash);
+
+        log.info("Retreiving {}", path);
+
         return redisOps.get(Utils.hexToBytes(hash), uuid)
-                .filter(m -> Files.exists(Path.of(FilerApplication.FILES_FOLDER, hash)))
+                .filter(m -> Files.exists(path))
                 .flatMap(m -> ServerResponse.ok()
                         .headers(getHeaderInjector(m))
-                        .body(BodyInserters.fromResource(new FileSystemResource(Path.of(FilerApplication.FILES_FOLDER, hash))))
+                        .body(BodyInserters.fromResource(new FileSystemResource(path)))
                 )
                 .switchIfEmpty(ServerResponse.notFound().build());
     }
@@ -96,6 +104,8 @@ public class FileHandler {
 
     private Mono<Void> saveFileOnDisk(byte[] fileHash, FilePart f) {
         var path = Path.of(FilerApplication.FILES_FOLDER, Utils.bytesToHex(fileHash));
+
+        log.info("Storing {}", path);
 
         if (Files.exists(path)) {
             return Mono.empty();
