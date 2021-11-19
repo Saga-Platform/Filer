@@ -29,6 +29,9 @@ spec:
       - name: filer
         image: docker.int.slongpre.com:34443/saga-filer:latest
         imagePullPolicy: Always
+        env:
+          - name: REDIS_HOST
+            value: redis.redis
         volumeMounts:
           - name: files
             mountPath: /files
