@@ -31,7 +31,7 @@ spec:
         imagePullPolicy: Always
         env:
           - name: REDIS_HOST
-            value: redis.redis
+            value: redis
         volumeMounts:
           - name: files
             mountPath: /files
