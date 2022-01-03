@@ -22,7 +22,7 @@ paths:
                     format: binary
       responses:
         201:
-          description: ""
+          description: "Created"
           content:  
             application/json:
               schema:         
