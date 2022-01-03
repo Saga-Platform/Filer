@@ -6,6 +6,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyExtractors;
@@ -39,7 +40,7 @@ public class FileHandler {
                 .cast(FilePart.class)
                 .flatMap(this::hashAndStoreFile)
                 .collectMap(Tuple2::getT1, Tuple2::getT2)
-                .as(mapMono -> ServerResponse.ok().body(mapMono, new ParameterizedTypeReference<>() {}));
+                .as(mapMono -> ServerResponse.status(HttpStatus.CREATED).body(mapMono, new ParameterizedTypeReference<>() {}));
     }
 
     public Mono<ServerResponse> retrieveFile(ServerRequest request) {
