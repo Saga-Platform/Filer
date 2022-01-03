@@ -74,8 +74,8 @@ public class FilerApplication implements WebFluxConfigurer {
     public RouterFunction<ServerResponse> router(FileHandler fileHandler) {
         return route()
                 .POST("/", fileHandler::storeFile)
-                .GET(String.format("/{%s}/{%s}", HASH_PATH_VAR, UUID_PATH_VAR), fileHandler::retrieveFile)
-                .DELETE(String.format("/{%s}/{%s}", HASH_PATH_VAR, UUID_PATH_VAR), fileHandler::deleteFile)
+                .GET(String.format("/{%s}:{%s}", HASH_PATH_VAR, UUID_PATH_VAR), fileHandler::retrieveFile)
+                .DELETE(String.format("/{%s}:{%s}", HASH_PATH_VAR, UUID_PATH_VAR), fileHandler::deleteFile)
                 .build();
     }
 }
