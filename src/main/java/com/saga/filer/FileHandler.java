@@ -6,6 +6,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyExtractors;
@@ -20,7 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -40,7 +40,7 @@ public class FileHandler {
                 .cast(FilePart.class)
                 .flatMap(this::hashAndStoreFile)
                 .collectMap(Tuple2::getT1, Tuple2::getT2)
-                .as(mapMono -> ServerResponse.ok().body(mapMono, new ParameterizedTypeReference<>() {}));
+                .as(mapMono -> ServerResponse.status(HttpStatus.CREATED).body(mapMono, new ParameterizedTypeReference<>() {}));
     }
 
     public Mono<ServerResponse> retrieveFile(ServerRequest request) {
@@ -67,7 +67,7 @@ public class FileHandler {
                 .switchIfEmpty(ServerResponse.notFound().build());
     }
 
-    private Mono<Tuple2<String, Map<String, String>>> hashAndStoreFile(FilePart f) {
+    private Mono<Tuple2<String, String>> hashAndStoreFile(FilePart f) {
         if (f.filename().isBlank()) {
             return Mono.error(() -> new NullPointerException("Empty file name"));
         }
@@ -106,14 +106,14 @@ public class FileHandler {
         return f.transferTo(path);
     }
 
-    private Mono<Map<String, String>> saveMetadataInRedis(byte[] fileHash, FilePart f) {
+    private Mono<String> saveMetadataInRedis(byte[] fileHash, FilePart f) {
         var metadata = new FileMetadata(f.filename(), Objects.toString(f.headers().getContentType()));
         var uuid = UUID.randomUUID();
 
         return redisOps.putIfAbsent(fileHash, uuid, metadata)
                 .flatMap(success -> {
                     if (Boolean.TRUE.equals(success)) {
-                        return Mono.just(Map.of("hash", Utils.bytesToHex(fileHash), "uuid", uuid.toString()));
+                        return Mono.just(String.format("%s:%s", Utils.bytesToHex(fileHash), uuid));
                     } else {
                         return Mono.error(() -> new IllegalStateException("File hash and UUID combination already present in Redis"));
                     }

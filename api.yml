@@ -1,0 +1,137 @@
+openapi: "3.0.0"
+info:
+  description: "HTTP file storage"
+  version: "1.0.0"
+  title: "Saga Filer"
+paths:
+  /:
+    post:
+      summary: "Add new files to the store"
+      description: ""
+      requestBody:
+        description: "Multipart form containing 1..n files"
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        201:
+          description: "Created"
+          content:  
+            application/json:
+              schema:         
+                type: object
+                properties:
+                  file1:
+                    type: object
+                    properties:
+                      uuid:
+                        type: string
+                        format: uuid
+                      hash:
+                        type: string
+                        example: 9fe0f3dadafea1abc30071a5324d7caa77a94c71e4cb8de4b959cdc8f0586fea
+                  file2:
+                    type: object
+                    properties:
+                      uuid:
+                        type: string
+                        format: uuid
+                      hash:
+                        type: string
+                        example: 9fe0f3dadafea1abc30071a5324d7caa77a94c71e4cb8de4b959cdc8f0586fea
+                  file3:
+                    type: object
+                    properties:
+                      uuid:
+                        type: string
+                        format: uuid
+                      hash:
+                        type: string
+                        example: 9fe0f3dadafea1abc30071a5324d7caa77a94c71e4cb8de4b959cdc8f0586fea
+        500:
+          $ref: "#/components/responses/ServerError"
+  /{fileId}:
+    get:
+      summary: "Retrieve a file from the store"
+      description: ""
+      parameters:
+        - in: path
+          name: fileId
+          schema:
+            type: string
+          required: true
+          description: String ID of the file to fetch
+      responses:
+        200:
+          description: "OK"
+          content:  
+            "*/*":
+              schema:         
+                type: string
+                format: binary
+                example: "(binary)"
+        404:
+          description: Not found
+        500:
+          $ref: "#/components/responses/ServerError"
+    delete:
+      summary: "Retrieve a file from the store"
+      description: ""
+      parameters:
+        - in: path
+          name: fileId
+          schema:
+            type: string
+          required: true
+          description: String ID of the file to fetch
+      responses:
+        204:
+          description: No content
+        404:
+          description: Not found
+        500:
+          $ref: "#/components/responses/ServerError"
+
+components:
+  responses:
+    ServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    Error:
+      type: object
+      properties:
+        status:
+          type: number
+          example: 500
+        error:
+          type: string
+          example: Internal Server Error
+        message:
+          type: string
+          example: Short message describing the problem
+        requestId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        exception:
+          type: string        
+      required:
+        - status
+        - error
+        - message
+
+
