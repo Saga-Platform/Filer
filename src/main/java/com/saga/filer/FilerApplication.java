@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.web.reactive.config.CorsRegistry;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -37,6 +38,14 @@ public class FilerApplication implements WebFluxConfigurer {
     }
 
     @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("*")
+                .allowedMethods("*")
+                .allowedHeaders("*");
+    }
+
+    @Override
     public void configureHttpMessageCodecs(ServerCodecConfigurer configurer) {
         var partReader = new DefaultPartHttpMessageReader();
         partReader.setMaxInMemorySize(MAX_IN_MEMORY_SIZE); // 16MB
@@ -45,8 +54,7 @@ public class FilerApplication implements WebFluxConfigurer {
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
-        http.cors().disable()
-                .csrf().disable()
+        http.csrf().disable()
                 .authorizeExchange()
                 .anyExchange().permitAll();
 
